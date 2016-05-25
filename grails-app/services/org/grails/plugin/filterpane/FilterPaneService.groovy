@@ -1,7 +1,8 @@
 package org.grails.plugin.filterpane
 
 import org.codehaus.groovy.grails.commons.GrailsApplication
-import org.codehaus.groovy.grails.compiler.injection.GrailsAwareClassLoader;
+import org.codehaus.groovy.grails.compiler.injection.GrailsAwareClassLoader
+import org.hibernate.sql.JoinType;
 
 class FilterPaneService {
 
@@ -160,6 +161,12 @@ class FilterPaneService {
                     if (params.sort) {
                         if (params.sort.indexOf('.') < 0) { // if not an association..
                             order(params.sort, params.order ?: 'asc')
+                        } else {
+                            def sortStrings = params.sort.toString().split('\\.')
+                            createAlias(sortStrings[0].toString(), "_assoc", JoinType.LEFT_OUTER_JOIN)
+                            order(org.hibernate.criterion.Order."${params.order ?: 'asc'}"("_assoc.${sortStrings[1]}")
+                                    .nulls(org.hibernate.NullPrecedence.LAST))
+                            log.debug "test"
                         }
                     } else if (defaultSort != null) {
                         log.debug('No sort specified and default is specified on domain. Using it.')
